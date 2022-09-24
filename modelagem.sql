@@ -86,3 +86,7 @@ create table mecanico_ordem_servico (
     constraint fk_mecanico_ordem_servico_mecanico foreign key (mecanico_id) references mecanico(id) on delete cascade,
     constraint fk_mecanico_ordem_servico_ordem_servico foreign key (ordem_servico_id) references ordem_servico(id) on delete cascade
 );
+
+--TODO: fazer os inserts
+
+--TODO: fazer os selects
