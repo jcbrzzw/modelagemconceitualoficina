@@ -1,3 +1,3 @@
 # Modelagem Conceitual Oficina
 
-Script para criação do banco e das tabelas.
+Script para criação do Banco e das tabelas.
