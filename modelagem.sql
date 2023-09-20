@@ -1,92 +1,138 @@
+-- Criação do banco
+CREATE DATABASE ecommerce;
+GO
 
--- Criação de banco de dados
-create database oficina;
+-- Coloca o banco em uso
+USE ecommerce;
+GO
 
--- Coloca o banco criado em uso  
-use doficina;
-
--- Criação das tabelas
-create table funcionario (
-    id int not null auto_increment,
-    nome varchar(45) not null,
-    codigo varchar(100) not null,
-    data_nascimento date not null,
-    telefone varchar(11) not null,
-    endereco varchar(100) not null,
-    salario float not null,
-    tipo_regime varchar(3) not null default 'CLT',
-    constraint pk_funcionario primary key (id)
+-- Criação da tabela cliente
+CREATE TABLE cliente (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    nome VARCHAR(60) NOT NULL,
+    identificacao VARCHAR(14) NOT NULL,
+    tipo_cliente CHAR(2) NOT NULL CHECK (tipo_cliente IN ('PF', 'PJ'))
 );
+GO
 
-create table administrativo (
-    id int not null auto_increment,
-    departamento varchar(20),
-    funcionario_id int not null,
-    constraint pk_administrativo primary key (id),
-    constraint fk_administrativo_funcionario foreign key (funcionario_id) references funcionario(id) on delete cascade
+-- Criação da tabela endereco
+CREATE TABLE endereco (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    rua VARCHAR(30) NOT NULL,
+    numero INT,
+    complemento VARCHAR(30),
+    bairro VARCHAR(30) NOT NULL,
+    cidade VARCHAR(30) NOT NULL,
+    estado CHAR(2) NOT NULL,
+    cep VARCHAR(8) NOT NULL,
+    fone VARCHAR(11),
+    cliente_id INT NOT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id) ON DELETE CASCADE
 );
+GO
 
-create table mecanico (
-    id int not null auto_increment,
-    especialidade varchar(30) not null,
-    funcionario_id int not null,
-    constraint pk_mecanico primary key (id),
-    constraint fk_mecanico_funcionario foreign key (funcionario_id) references funcionario(id) on delete cascade
+-- Criação da tabela entrega
+CREATE TABLE entrega (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    empresa VARCHAR(45) NOT NULL,
+    data_prevista DATE NOT NULL,
+    data_entrega DATE,
+    status_entrega SMALLINT NOT NULL CHECK (status_entrega IN (0,1,2,3,4,5,6,7)),
+    valor_frete FLOAT NOT NULL,
+    codigo_rastreio VARCHAR(30)
 );
+GO
 
-create table cliente (
-    id int not null auto_increment,
-    nome varchar(45) not null,
-    telefone varchar(11) not null,
-    endereco varchar(100) not null,
-    cpf_cnpj varchar(14) not null,
-    constraint pk_cliente primary key (id)
+-- Criação da tabela pagamento
+CREATE TABLE pagamento (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    tipo_pagamento CHAR(1) NOT NULL CHECK (tipo_pagamento IN ('C', 'D', 'P', 'B')),
+    pix_copia_cola VARCHAR(255),
+    numero_cartao VARCHAR(20),
+    data_validade CHAR(6),
+    bandeira_cartao VARCHAR(20),
+    nome_portador VARCHAR(45),
+    identificao VARCHAR(14) NOT NULL,
+    codigo_barras VARCHAR(48),
+    emissao_boleto DATE,
+    vencimento_boleto DATE,
+    data_recebimento DATE,
+    status_pagamento SMALLINT NOT NULL CHECK (status_pagamento IN (0,1,2,3,4,5,6)),
+    data_status DATETIME DEFAULT NULL,
+    valor FLOAT
 );
+GO
 
-create table veiculo (
-    id int not null auto_increment,
-    marca varchar(30) not null,
-    modelo varchar(30) not null,
-    ano_fabricacao date not null,
-    ano_modelo date,
-    combustivel varchar(10),
-    seguro boolean,
-    cliente_id int not null,
-    constraint pk_veiculo primary key (id),
-    constraint fk_veiculo_cliente foreign key (cliente_id) references cliente(id) on delete cascade
+-- Criação da tabela pedido
+CREATE TABLE pedido (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    status_pedido SMALLINT NOT NULL CHECK (status_pedido IN (0,1,2)),
+    tipo_cancelamento CHAR(1) CHECK (tipo_cancelamento IN ('X', 'C', 'R')),
+    cliente_id INT NOT NULL,
+    entrega_id INT NOT NULL,
+    pagamento_id INT NOT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id),
+    FOREIGN KEY (entrega_id) REFERENCES entrega(id),
+    FOREIGN KEY (pagamento_id) REFERENCES pagamento(id)
 );
+GO
 
-create table pedido (
-    id int not null auto_increment,
-    cliente_id int not null,
-    administrativo_id int not null,
-    tipo varchar(30) not null,
-    descricao varchar(255) not null,
-    valor float not null,
-    constraint pk_pedido primary key (id),
-    constraint fk_pedido_cliente foreign key (cliente_id) references cliente(id) on delete cascade,
-    constraint fk_pedido_administrativo foreign key (administrativo_id) references administrativo(id) on delete cascade
+-- Criação da tabela estoque
+CREATE TABLE estoque (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    cidade VARCHAR(30)
 );
+GO
 
-create table ordem_servico (
-    id int not null auto_increment,
-    pedido_id int not null,
-    veiculo_id int not null,
-    data_inicio date not null,
-    data_entrega date,
-    status_ordem smallint comment '0: Pendente, 1: Em andamento, 2: Finalizado, 3: Cancelado',
-    constraint pk_ordem_servico primary key (id),
-    constraint fk_ordem_servico_pedido foreign key (pedido_id) references pedido(id) on delete cascade,
-    constraint fk_ordem_servico_veiculo foreign key (veiculo_id) references veiculo(id) on delete cascade
+-- Criação da tabela produto
+CREATE TABLE produto (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    nome VARCHAR(30) NOT NULL,
+    descricacao TEXT NOT NULL,
+    valor FLOAT
 );
+GO
 
-create table mecanico_ordem_servico (
-    mecanico_id int not null,
-    ordem_servico_id int not null,
-    constraint pk_mecanico_ordem_servico primary key (mecanico_id, ordem_servico_id),
-    constraint fk_mecanico_ordem_servico_mecanico foreign key (mecanico_id) references mecanico(id) on delete cascade,
-    constraint fk_mecanico_ordem_servico_ordem_servico foreign key (ordem_servico_id) references ordem_servico(id) on delete cascade
+-- Criação da tabela estoque_produto
+CREATE TABLE estoque_produto (
+    estoque_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT CHECK (quantidade >= 0),
+    PRIMARY KEY (estoque_id, produto_id),
+    FOREIGN KEY (estoque_id) REFERENCES estoque(id),
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
 );
+GO
+
+-- Criação da tabela pedido_produto
+CREATE TABLE pedido_produto (
+    pedido_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT NOT NULL,
+    PRIMARY KEY (pedido_id, produto_id),
+    FOREIGN KEY (pedido_id) REFERENCES pedido(id),
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
+);
+GO
+
+-- Criação da tabela fornecedor
+CREATE TABLE fornecedor (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    razao_social VARCHAR(45),
+    cnpj CHAR(14) NOT NULL
+);
+GO
+
+-- Criação da tabela fornecedor_produto
+CREATE TABLE fornecedor_produto (
+    fornecedor_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    PRIMARY KEY (fornecedor_id, produto_id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedor(id),
+    FOREIGN KEY (produto_id) REFERENCES produto(id)
+);
+GO
+
 
 --TODO: fazer os inserts
 
