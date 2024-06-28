@@ -4,7 +4,7 @@
 
 Foi criado um banco de dados chamado "oficina" que está relacionado a uma oficina mecânica. O banco de dados possui várias tabelas que armazenam informações sobre funcionários, clientes, veículos, pedidos, ordens de serviço. 
 
-## 💡 Breve descrição de cada tabela:
+## 💡Descrição de cada tabela:
 
 #### 🔸funcionario: 
 Armazena informações sobre os funcionários da oficina, como nome, código, data de nascimento, telefone, endereço, salário e tipo de regime de trabalho (por exemplo, CLT).
